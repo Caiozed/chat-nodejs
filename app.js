@@ -1,7 +1,8 @@
 // get all required items
 var express = require("express");
 var engines = require("consolidate");
-var MongoClient = require("mongodb").MongoClient;
+var mongodb = require("mongodb");
+var MongoClient = mongodb.MongoClient;
 var bodyParser = require("body-parser");
 var assert = require("assert");
 var logger = require("morgan");
@@ -39,13 +40,21 @@ MongoClient.connect(mongoUri, function(err, db) {
       });
   });
 
-  app.get("/messages/:filter/:order", function(req, res) {
-    var filter = req.params.filter;
-    var order = req.params.order;
+  app.post("/messages/:order", function(req, res) {
+    var filter = req.body.filter;
+    var order = parseInt(req.params.order);
+    var query = {};
+    query["user._id"] = filter.user._id;
+    query["createdAt"] = {
+      $gte: req.body.filter.date + "T00:00:00.184Z",
+      $lte: req.body.filter.date + "T23:59:00.184Z"
+    };
+
     db.collection("messages")
-      .find(filter)
+      .find(query)
       .sort({ createdAt: order })
       .toArray(function(err, docs) {
+        console.log(docs);
         res.json(docs);
       });
   });
@@ -55,6 +64,19 @@ MongoClient.connect(mongoUri, function(err, db) {
     db.collection("messages").insertOne(data, function(err, doc) {
       assert.equal(null, err);
       websocket.emit("new-message", doc.ops[0]);
+      // res.json(doc);
+    });
+  });
+
+  app.post("/delete/message", function(req, res) {
+    var id = req.body.id;
+    db.collection("messages").deleteOne({ _id: mongodb.ObjectID(id) }, function(
+      err,
+      doc
+    ) {
+      assert.equal(null, err);
+      console.log(doc.result.n + " document(s) deleted");
+      websocket.emit("remove-message", id);
       // res.json(doc);
     });
   });
