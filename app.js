@@ -184,5 +184,5 @@ MongoClient.connect(mongoUri, function(err, db) {
     console.log("A client just joined on", socket.id);
   });
 
-  websocket.listen(port);
+  websocket.listen(50000);
 });
