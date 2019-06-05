@@ -14,7 +14,8 @@ var mongoUri =
   process.env.MONGOHQ_URL ||
   "mongodb://localhost:27017/chat";
 var app = express();
-var websocket = socketio();
+var server = require("http").createServer(app);
+var websocket = require("socket.io").listen(server);
 
 // configure our server
 app.use(favicon(path.join(__dirname, "public", "favicon.ico")));
@@ -184,5 +185,5 @@ MongoClient.connect(mongoUri, function(err, db) {
     console.log("A client just joined on", socket.id);
   });
 
-  websocket.listen(50000);
+  server.listen(process.env.PORT || 3000);
 });
